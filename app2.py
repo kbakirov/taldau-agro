@@ -1,8 +1,7 @@
 """
-Локализация добавленной стоимости: Smart Governance и территориальный эффект
-Кейс: Аршалынский район Акмолинской области
-
-Дашборд для V потока «Талдау мектебі - Школа аналитики»
+ЕДИНАЯ ПЛАТФОРМА SMART GOVERNANCE
+Республика Казахстан
+Цветовая схема: Stormy Morning
 """
 
 import streamlit as st
@@ -11,826 +10,1697 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
+from datetime import datetime, timedelta
 
-# Конфигурация страницы
+# ============== КОНФИГУРАЦИЯ ==============
 st.set_page_config(
-    page_title="Аршалы: Локализация добавленной стоимости",
-    page_icon="🌾",
+    page_title="Единая платформа Smart Governance",
+    page_icon="🇰🇿",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Стили
-st.markdown("""
+# ============== STORMY MORNING PALETTE ==============
+COLORS = {
+    'dark': '#384959',
+    'muted': '#6A89A7',
+    'medium': '#88BDF2',
+    'light': '#BDDDFC',
+    'bg': '#F4F8FC',
+    'white': '#FFFFFF',
+    'success': '#4A9079',
+    'warning': '#C4956A',
+    'danger': '#A76A6A',
+    'text': '#2D3748',
+    'text_secondary': '#5A6B7D',
+}
+
+# ============== СТИЛИ ==============
+st.markdown(f"""
 <style>
-    .main-header {
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    * {{
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }}
+    
+    .stApp {{
+        background: {COLORS['bg']};
+    }}
+    
+    .block-container {{
+        padding: 1rem 2rem 2rem 2rem;
+        max-width: 1400px;
+    }}
+    
+    /* Скрыть стандартные элементы */
+    #MainMenu {{visibility: hidden;}}
+    footer {{visibility: hidden;}}
+    header {{visibility: hidden;}}
+    .stDeployButton {{display: none;}}
+    
+    /* ===== SIDEBAR ===== */
+    [data-testid="stSidebar"] {{
+        background: {COLORS['dark']};
+        border-right: 1px solid {COLORS['light']};
+    }}
+    
+    [data-testid="stSidebar"] > div:first-child {{
+        padding-top: 1rem;
+    }}
+    
+    .sidebar-header {{
+        text-align: center;
+        padding: 1.5rem 1rem;
+        border-bottom: 1px solid {COLORS['light']};
+        margin-bottom: 1rem;
+    }}
+    
+    .sidebar-logo {{
         font-size: 2.5rem;
-        font-weight: bold;
-        color: #1E3A5F;
-        text-align: center;
         margin-bottom: 0.5rem;
-    }
-    .sub-header {
-        font-size: 1.2rem;
-        color: #666;
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-    .metric-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 1.5rem;
-        border-radius: 10px;
-        color: white;
-        text-align: center;
-    }
-    .metric-value {
-        font-size: 2rem;
-        font-weight: bold;
-    }
-    .metric-label {
-        font-size: 0.9rem;
-        opacity: 0.9;
-    }
-    .insight-box {
-        background-color: #f0f7ff;
-        border-left: 4px solid #1E3A5F;
-        padding: 1rem;
-        margin: 1rem 0;
-        border-radius: 0 8px 8px 0;
-    }
-    .warning-box {
-        background-color: #fef3cd;
-        border-left: 5px solid #d69e00;
-        padding: 1.2rem;
-        margin: 1rem 0;
-        border-radius: 0 8px 8px 0;
-        color: #664d03;
-    }
-    .warning-box h4 {
-        color: #664d03;
-        margin-bottom: 0.8rem;
-    }
-    .warning-box p, .warning-box li {
-        color: #664d03;
-        font-size: 0.95rem;
-    }
-    .warning-box b {
-        color: #523e02;
-    }
-    .estimate-note {
-        background-color: #e7f3ff;
-        border: 1px dashed #0066cc;
-        padding: 0.5rem;
-        border-radius: 5px;
+    }}
+    
+    .sidebar-title {{
+        color: {COLORS['light']};
+        font-size: 1rem;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1.3;
+    }}
+    
+    .sidebar-subtitle {{
+        color: {COLORS['muted']};
         font-size: 0.8rem;
-        color: #004085;
-        margin-top: 0.8rem;
-    }
+        margin-top: 0.3rem;
+    }}
+    
+    /* Sidebar radio */
+    [data-testid="stSidebar"] .stRadio > div {{
+        gap: 0.25rem;
+    }}
+    
+    [data-testid="stSidebar"] .stRadio label {{
+        background: transparent;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin: 0.15rem 0;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        color: {COLORS['text']};
+        font-weight: 500;
+    }}
+    
+    [data-testid="stSidebar"] .stRadio label:hover {{
+        background: {COLORS['light']};
+    }}
+    
+    [data-testid="stSidebar"] .stRadio label[data-checked="true"] {{
+        background: linear-gradient(135deg, {COLORS['medium']}, {COLORS['muted']});
+        color: white;
+    }}
+    
+    /* ===== PAGE HEADER ===== */
+    .page-header {{
+        background: linear-gradient(135deg, {COLORS['dark']} 0%, {COLORS['muted']} 100%);
+        color: white;
+        padding: 1.75rem 2rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 20px rgba(56, 73, 89, 0.2);
+    }}
+    
+    .page-header h1 {{
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+    }}
+    
+    .page-header p {{
+        margin: 0.4rem 0 0 0;
+        opacity: 0.9;
+        font-size: 0.9rem;
+    }}
+    
+    /* ===== SECTION TITLE ===== */
+    .section-title {{
+        color: {COLORS['dark']};
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 1.5rem 0 1rem 0;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid {COLORS['light']};
+    }}
+    
+    /* ===== CARDS ===== */
+    .card {{
+        background: {COLORS['white']};
+        border-radius: 12px;
+        padding: 1.25rem;
+        box-shadow: 0 2px 8px rgba(56, 73, 89, 0.06);
+        border: 1px solid {COLORS['light']};
+        margin-bottom: 1rem;
+        transition: all 0.2s ease;
+    }}
+    
+    .card:hover {{
+        box-shadow: 0 4px 16px rgba(56, 73, 89, 0.1);
+        border-color: {COLORS['medium']};
+    }}
+    
+    .card-header {{
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.75rem;
+    }}
+    
+    .card-title {{
+        color: {COLORS['dark']};
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0;
+    }}
+    
+    .card-subtitle {{
+        color: {COLORS['muted']};
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+    }}
+    
+    /* ===== METRICS ===== */
+    .metric {{
+        background: {COLORS['white']};
+        border-radius: 10px;
+        padding: 1rem 1.25rem;
+        border: 1px solid {COLORS['light']};
+        height: 100%;
+    }}
+    
+    .metric-label {{
+        color: {COLORS['muted']};
+        font-size: 0.8rem;
+        font-weight: 500;
+        margin-bottom: 0.3rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }}
+    
+    .metric-value {{
+        color: {COLORS['dark']};
+        font-size: 1.5rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }}
+    
+    .metric-delta {{
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-top: 0.3rem;
+    }}
+    
+    .metric-delta.positive {{ color: {COLORS['success']}; }}
+    .metric-delta.negative {{ color: {COLORS['danger']}; }}
+    .metric-delta.neutral {{ color: {COLORS['muted']}; }}
+    
+    /* ===== HIGHLIGHT METRIC ===== */
+    .metric-highlight {{
+        background: linear-gradient(135deg, {COLORS['dark']} 0%, {COLORS['muted']} 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 1.25rem;
+        box-shadow: 0 4px 16px rgba(56, 73, 89, 0.25);
+    }}
+    
+    .metric-highlight .metric-label {{
+        color: rgba(255,255,255,0.8);
+    }}
+    
+    .metric-highlight .metric-value {{
+        color: white;
+        font-size: 1.75rem;
+    }}
+    
+    .metric-highlight .metric-delta {{
+        color: rgba(255,255,255,0.9);
+    }}
+    
+    /* ===== ALERTS ===== */
+    .alert {{
+        padding: 1rem 1.25rem;
+        border-radius: 8px;
+        margin: 0.75rem 0;
+        border-left: 4px solid;
+    }}
+    
+    .alert-success {{
+        background: #EBF5F1;
+        border-color: {COLORS['success']};
+    }}
+    .alert-success .alert-title {{ color: #2D5A4A; }}
+    .alert-success .alert-text {{ color: #3D7A62; }}
+    
+    .alert-warning {{
+        background: #FDF6EE;
+        border-color: {COLORS['warning']};
+    }}
+    .alert-warning .alert-title {{ color: #8B5A2B; }}
+    .alert-warning .alert-text {{ color: #A67344; }}
+    
+    .alert-danger {{
+        background: #F9EEEE;
+        border-color: {COLORS['danger']};
+    }}
+    .alert-danger .alert-title {{ color: #6B3A3A; }}
+    .alert-danger .alert-text {{ color: #8B4A4A; }}
+    
+    .alert-info {{
+        background: #EDF4FC;
+        border-color: {COLORS['medium']};
+    }}
+    .alert-info .alert-title {{ color: {COLORS['dark']}; }}
+    .alert-info .alert-text {{ color: {COLORS['muted']}; }}
+    
+    .alert-title {{
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 0.3rem;
+    }}
+    
+    .alert-text {{
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }}
+    
+    /* ===== AI BOX ===== */
+    .ai-box {{
+        background: linear-gradient(135deg, #E8F4FD 0%, {COLORS['light']} 100%);
+        border-left: 4px solid {COLORS['medium']};
+        border-radius: 0 10px 10px 0;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+    }}
+    
+    .ai-box-title {{
+        color: {COLORS['dark']};
+        font-weight: 600;
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }}
+    
+    .ai-box-text {{
+        color: {COLORS['text_secondary']};
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }}
+    
+    /* ===== BADGES ===== */
+    .badge {{
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }}
+    
+    .badge-primary {{ background: {COLORS['light']}; color: {COLORS['dark']}; }}
+    .badge-success {{ background: #D4ECE3; color: #2D5A4A; }}
+    .badge-warning {{ background: #F9E8D6; color: #8B5A2B; }}
+    .badge-danger {{ background: #F2DADA; color: #6B3A3A; }}
+    
+    /* ===== PROGRESS ===== */
+    .progress-container {{
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-top: 0.5rem;
+    }}
+    
+    .progress-bar {{
+        flex: 1;
+        height: 6px;
+        background: {COLORS['light']};
+        border-radius: 3px;
+        overflow: hidden;
+    }}
+    
+    .progress-fill {{
+        height: 100%;
+        border-radius: 3px;
+        background: linear-gradient(90deg, {COLORS['medium']}, {COLORS['muted']});
+    }}
+    
+    .progress-fill.success {{ background: linear-gradient(90deg, {COLORS['success']}, #5AA88F); }}
+    .progress-fill.warning {{ background: linear-gradient(90deg, {COLORS['warning']}, #D4A57A); }}
+    .progress-fill.danger {{ background: linear-gradient(90deg, {COLORS['danger']}, #B87A7A); }}
+    
+    .progress-text {{
+        color: {COLORS['muted']};
+        font-size: 0.8rem;
+        font-weight: 600;
+        min-width: 40px;
+        text-align: right;
+    }}
+    
+    /* ===== TABLE STYLES ===== */
+    .data-table {{
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+    }}
+    
+    .data-table th {{
+        background: {COLORS['light']};
+        color: {COLORS['dark']};
+        font-weight: 600;
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 2px solid {COLORS['medium']};
+    }}
+    
+    .data-table td {{
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid {COLORS['light']};
+        color: {COLORS['text']};
+    }}
+    
+    .data-table tr:hover td {{
+        background: {COLORS['bg']};
+    }}
+    
+    /* ===== SYNC BANNER ===== */
+    .sync-banner {{
+        background: #EDF4FC;
+        border: 1px solid {COLORS['medium']};
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 1rem 0;
+    }}
+    
+    .sync-icon {{
+        width: 8px;
+        height: 8px;
+        background: {COLORS['success']};
+        border-radius: 50%;
+        animation: pulse 2s ease-in-out infinite;
+    }}
+    
+    @keyframes pulse {{
+        0%, 100% {{ opacity: 1; transform: scale(1); }}
+        50% {{ opacity: 0.5; transform: scale(1.2); }}
+    }}
+    
+    .sync-text {{
+        color: {COLORS['dark']};
+        font-weight: 500;
+        font-size: 0.85rem;
+    }}
+    
+    /* ===== TABS ===== */
+    .stTabs [data-baseweb="tab-list"] {{
+        gap: 4px;
+        background: {COLORS['white']};
+        padding: 4px;
+        border-radius: 8px;
+        border: 1px solid {COLORS['light']};
+    }}
+    
+    .stTabs [data-baseweb="tab"] {{
+        background: transparent;
+        border-radius: 6px;
+        padding: 8px 16px;
+        font-weight: 500;
+        color: {COLORS['muted']};
+        font-size: 0.85rem;
+    }}
+    
+    .stTabs [aria-selected="true"] {{
+        background: {COLORS['dark']};
+        color: white;
+    }}
+    
+    /* ===== BUTTONS ===== */
+    .stButton > button {{
+        background: linear-gradient(135deg, {COLORS['medium']} 0%, {COLORS['muted']} 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1.25rem;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(136, 189, 242, 0.3);
+    }}
+    
+    .stButton > button:hover {{
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(136, 189, 242, 0.4);
+    }}
+    
+    /* Secondary button */
+    .stButton > button[kind="secondary"] {{
+        background: {COLORS['white']};
+        color: {COLORS['dark']};
+        border: 1px solid {COLORS['light']};
+        box-shadow: none;
+    }}
+    
+    /* ===== FOOTER ===== */
+    .footer {{
+        background: {COLORS['dark']};
+        color: white;
+        padding: 1.25rem 1.5rem;
+        border-radius: 10px;
+        margin-top: 2rem;
+        text-align: center;
+    }}
+    
+    .footer-title {{
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+    }}
+    
+    .footer-subtitle {{
+        color: rgba(255,255,255,0.6);
+        font-size: 0.8rem;
+    }}
+    
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {{
+        .block-container {{
+            padding: 1rem;
+        }}
+        
+        .page-header {{
+            padding: 1.25rem 1.5rem;
+        }}
+        
+        .page-header h1 {{
+            font-size: 1.25rem;
+        }}
+        
+        .metric-value {{
+            font-size: 1.25rem;
+        }}
+        
+        [data-testid="stSidebar"] {{
+            min-width: 200px;
+        }}
+    }}
+    
+    /* ===== PLOTLY OVERRIDES ===== */
+    .js-plotly-plot .plotly .modebar {{
+        display: none !important;
+    }}
 </style>
 """, unsafe_allow_html=True)
 
-# ==================== ДАННЫЕ ====================
+# ============== КОМПОНЕНТЫ ==============
+
+def render_page_header(title, subtitle):
+    st.markdown(f"""
+    <div class="page-header">
+        <h1>{title}</h1>
+        <p>{subtitle}</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_section_title(title):
+    st.markdown(f'<div class="section-title">{title}</div>', unsafe_allow_html=True)
+
+def render_metric(label, value, delta=None, delta_type="neutral", highlight=False):
+    delta_html = ""
+    if delta:
+        delta_html = f'<div class="metric-delta {delta_type}">{delta}</div>'
+    
+    card_class = "metric-highlight" if highlight else "metric"
+    st.markdown(f"""
+    <div class="{card_class}">
+        <div class="metric-label">{label}</div>
+        <div class="metric-value">{value}</div>
+        {delta_html}
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_alert(alert_type, title, text):
+    st.markdown(f"""
+    <div class="alert alert-{alert_type}">
+        <div class="alert-title">{title}</div>
+        <div class="alert-text">{text}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_ai_box(title, text):
+    st.markdown(f"""
+    <div class="ai-box">
+        <div class="ai-box-title">ИИ-рекомендация: {title}</div>
+        <div class="ai-box-text">{text}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_sync_banner(text):
+    st.markdown(f"""
+    <div class="sync-banner">
+        <div class="sync-icon"></div>
+        <div class="sync-text">{text}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_task_card(ministry, task, status, progress, critical):
+    critical_class = "danger" if critical == "Критическая" else "warning"
+    status_class = "primary" if status == "В работе" else "warning" if status == "Ожидает" else "primary"
+    progress_class = "danger" if progress < 40 else "warning" if progress < 70 else "success"
+    
+    st.markdown(f"""
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <span class="badge badge-{critical_class}">{critical}</span>
+                <div class="card-title" style="margin-top:0.5rem;">{ministry}</div>
+            </div>
+            <span class="badge badge-{status_class}">{status}</span>
+        </div>
+        <div class="card-subtitle">{task}</div>
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill {progress_class}" style="width:{progress}%;"></div>
+            </div>
+            <span class="progress-text">{progress}%</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_subsidy_card(name, amount, deadline, status, requires_local=False):
+    local_badge = '<span class="badge badge-success" style="margin-left:8px;">Переработка</span>' if requires_local else ""
+    st.markdown(f"""
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">{name}{local_badge}</div>
+                <div class="card-subtitle">Макс: {amount} | Срок: {deadline}</div>
+            </div>
+            <span class="badge badge-success">{status}</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_order_card(buyer, product, volume, price, status):
+    status_class = "primary" if status == "Новый" else "success"
+    st.markdown(f"""
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">{buyer}</div>
+                <div class="card-subtitle">{product} | {volume}</div>
+                <div style="color:{COLORS['success']};font-weight:700;font-size:1.1rem;margin-top:0.5rem;">{price}</div>
+            </div>
+            <span class="badge badge-{status_class}">{status}</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_producer_card(name, product, volume, rating, contact):
+    st.markdown(f"""
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">{name}</div>
+                <div class="card-subtitle">{product} | {volume}</div>
+            </div>
+            <span class="badge badge-primary">{rating}</span>
+        </div>
+        <div style="color:{COLORS['muted']};font-size:0.85rem;">{contact}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_footer():
+    st.markdown("""
+    <div class="footer">
+        <div class="footer-title">V поток «Талдау мектебі» | Сенат Парламента РК</div>
+        <div class="footer-subtitle">Smart Governance: данные, аналитика и ИИ для эффективного управления</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# ============== ДАННЫЕ ==============
 
 @st.cache_data
-def load_district_profile():
-    """Базовые данные района из паспорта"""
-    return {
-        "name": "Аршалынский район",
-        "region": "Акмолинская область",
-        "area_km2": 5800,
-        "area_ha": 584786,
-        "population": 33363,
-        "distance_to_astana": 71,
-        "agricultural_land_ha": 519400,
-        "arable_land_ha": 238500,
-        "pastures_ha": 275300,
-        "cattle": 16695,
-        "sheep_goats": 154784,
-        "horses": 9517,
-        "pigs": 4300,
-        "industrial_enterprises": 28,
-        "rural_districts": 12,
-        "settlements": 1,
-    }
-
-@st.cache_data
-def load_subsidies_data():
-    """Данные по субсидиям - РЕАЛЬНЫЕ из Аршалынскии__2025_.xlsx"""
-    # Реальные данные из файла (топ получателей)
-    subsidies_2025 = pd.DataFrame({
-        'Получатель': [
-            'ТОО "АГРО ПРЕСТИЖ М"', 
-            'КХ "Арай"', 
-            'ТОО "КОЙГЕЛЬДЫ-АСТЫК"',
-            'ПК "ИЖЕВСКИЙ"',
-            'ТОО "РАХАТ"',
-            'КХ "Айтпай" (Ивченко В.А.)',
-            'ТОО "BersuatAgroPro"',
-            'К/Х "АСЕТ"',
-            'ИП "СУРАЕВ Ю.В."',
-            'ИП "Искакова Н.Ж."'
-        ],
-        'Сумма_тг': [
-            91558200, 41670000, 41670000, 32277900, 20655000,
-            7374000, 3579677, 7593600, 3900000, 2910000
-        ],
-        'Тип': ['ТОО', 'КХ', 'ТОО', 'ПК', 'ТОО', 'КХ', 'ТОО', 'КХ', 'ИП', 'ИП'],
-        'Программа': [
-            'Инвестиции', 'Семеноводство', 'Семеноводство', 'Инвестиции', 'Инвестиции',
-            'Инвестиции', 'Инвестиции', 'Семеноводство', 'Инвестиции', 'Пестициды'
-        ]
-    })
-    return subsidies_2025
-
-# Общие итоги субсидий (из файла)
-SUBSIDIES_TOTALS = {
-    'total_2025': 459720381,  # тенге (без учёта ИТОГО строки, которая дублирует)
-    'recipients_count': 33,
-    'by_type': {
-        'ТОО': 280000000,  # оценочно
-        'КХ': 120000000,
-        'ПК': 40000000,
-        'ИП': 20000000
-    }
-}
-
-@st.cache_data  
-def load_crops_data():
-    """Данные по посевам - РЕАЛЬНЫЕ из ПОСЕВ_АРШАЛЫ_факт_2025.xlsx"""
-    # Данные из файла: итоговый лист "20 июня 2025 (итог)"
-    crops = pd.DataFrame({
-        'Хозяйство': ['ТОО "Енбек-1"', 'ТОО "Tamyr2024"', 'ПК "Ижевский"', 'ТОО "ТНС-Агро"',
-                      'ТОО "Сарыоба астык"', 'ТОО "Акбулак Агро"', 'ТОО ПКФ "Агросоюз"',
-                      'ТОО "Николаевское"', 'ТОО "ПХ Аршалы"', 'ТОО "Адал-ниет"',
-                      'ТОО "Койгельды астык"', 'ТОО "Ольгинское"', 'КХ (всего)'],
-        'План_га': [16892, 12968, 10295, 7522, 5700, 6500, 4838, 4180, 3866, 2861, 2800, 2000, 44036],
-        'Факт_га': [19578, 14283, 11554, 8905, 7641, 6270, 4770, 4000, 650, 1640, 2700, 850, 53495],
-        'Пшеница_факт': [19578, 12439, 7931, 8905, 7161, 6270, 4770, 3750, 0, 540, 2000, 0, 45800],
-        'Ячмень_факт': [0, 1844, 2778, 0, 480, 0, 0, 250, 0, 648, 700, 500, 5655],
-        'Горох_факт': [0, 0, 567, 0, 0, 0, 0, 0, 0, 452, 0, 0, 70],
-        'Масличные_факт': [0, 6180, 449, 3900, 0, 0, 1830, 0, 0, 0, 0, 0, 568],
-        'Выполнение_%': [115.9, 110.1, 112.2, 118.4, 134.1, 96.5, 98.6, 95.7, 16.8, 57.3, 96.4, 42.5, 121.5]
-    })
-    return crops
-
-# Итоговые данные по району (из файла)
-CROPS_TOTALS = {
-    'plan_total': 173346,      # План зерновые всего, га
-    'fact_total': 191868,      # Факт зерновые всего, га
-    'execution_pct': 110.7,    # % выполнения
-    'wheat_plan': 148000,
-    'wheat_fact': 163031,
-    'barley_plan': 18299,
-    'barley_fact': 21113,
-    'oats_fact': 1029,
-    'peas_plan': 2500,
-    'peas_fact': 1309,
-    'oilseeds_plan': 10000,
-    'oilseeds_fact': 18662,
-    'fodder_fact': 11795,
-}
-
-@st.cache_data
-def load_processing_capacity():
-    """Данные о перерабатывающих мощностях"""
+def load_price_data():
+    dates = pd.date_range(start='2026-01-01', periods=40, freq='D')
+    np.random.seed(42)
+    base_astana = 90000
+    base_export = 96000
+    
+    astana_prices = [base_astana]
+    export_prices = [base_export]
+    
+    for i in range(1, 40):
+        astana_prices.append(astana_prices[-1] + np.random.randint(-500, 800))
+        export_prices.append(export_prices[-1] + np.random.randint(-400, 900))
+    
     return pd.DataFrame({
-        'Тип_переработки': ['Мельницы', 'Элеваторы', 'Мясопереработка', 'Молокопереработка', 
-                           'Хранение овощей', 'Комбикорма'],
-        'Количество': [2, 3, 1, 0, 2, 1],
-        'Мощность': ['5000 т/год', '150000 т', '500 т/год', '0', '2000 т', '3000 т/год'],
-        'Загрузка_%': [40, 65, 30, 0, 25, 50],
-        'Статус': ['Работает', 'Работает', 'Частично', 'Нет', 'Сезонно', 'Работает']
+        'Дата': dates,
+        'Астана': astana_prices,
+        'Экспорт': export_prices,
+        'Ячмень': [p * 0.75 for p in astana_prices],
     })
 
 @st.cache_data
-def load_value_chain_flows():
-    """Потоки продукции - ОЦЕНОЧНЫЕ ДАННЫЕ, требуют верификации!
-    
-    ⚠️ Эти данные НЕ из файлов, а экспертные оценки.
-    Для получения реальных данных необходимо:
-    1. Опрос СХТП района о направлениях сбыта
-    2. Данные перерабатывающих предприятий
-    3. Статистика вывоза продукции
-    """
+def load_localization_data():
     return pd.DataFrame({
-        'Продукция': ['Зерно', 'Мясо КРС', 'Молоко', 'Овощи', 'Корма'],
-        'Производство_т': [180000, 2500, 8000, 1500, 15000],  # Оценка на основе посевов
-        'Местная_переработка_%': [15, 20, 5, 30, 60],  # ⚠️ ОЦЕНКА
-        'Вывоз_в_Астану_%': [60, 50, 70, 50, 10],      # ⚠️ ОЦЕНКА
-        'Вывоз_другие_%': [25, 30, 25, 20, 30],        # ⚠️ ОЦЕНКА
-        'Цена_производителя_тг': [80000, 1500000, 200000, 150000, 50000],
-        'Цена_конечная_тг': [250000, 3500000, 400000, 350000, 80000],
-        'Источник': ['Оценка'] * 5  # Маркер что это оценки
+        'Год': ['2024', '2025', '2026', '2027', '2028', '2029', '2030'],
+        'Факт': [15, 18, 25, 35, 42, 48, 55],
+        'Цель': [50, 50, 50, 50, 50, 50, 50]
     })
 
-# ==================== ФУНКЦИИ ВИЗУАЛИЗАЦИИ ====================
+@st.cache_data
+def load_radar_data():
+    return pd.DataFrame({
+        'Показатель': ['АПК', 'Образование', 'Здравоохранение', 'Безопасность', 'Инфраструктура', 'Финансы'],
+        'Значение': [78, 72, 65, 85, 67, 70],
+        'Целевое': [85, 80, 80, 90, 80, 80]
+    })
 
-def create_sankey_diagram(flows_df):
-    """Диаграмма Санки для потоков продукции"""
-    labels = ['Производство Аршалы', 'Местная переработка', 'Вывоз в Астану', 
-              'Вывоз другие регионы', 'Добавленная стоимость (местная)', 
-              'Добавленная стоимость (утечка)']
-    
-    source = [0, 0, 0, 1, 2, 3]
-    target = [1, 2, 3, 4, 5, 5]
-    
-    # Агрегированные значения (млрд тенге)
-    values = [3.2, 12.5, 5.8, 1.5, 8.0, 4.5]
-    
-    fig = go.Figure(data=[go.Sankey(
-        node=dict(
-            pad=15,
-            thickness=20,
-            line=dict(color="black", width=0.5),
-            label=labels,
-            color=["#2E86AB", "#28A745", "#FFC107", "#DC3545", "#28A745", "#DC3545"]
-        ),
-        link=dict(
-            source=source,
-            target=target,
-            value=values,
-            color=['rgba(46,134,171,0.4)', 'rgba(255,193,7,0.4)', 'rgba(220,53,69,0.4)',
-                   'rgba(40,167,69,0.4)', 'rgba(220,53,69,0.4)', 'rgba(220,53,69,0.4)']
-        )
-    )])
-    
-    fig.update_layout(
-        title_text="Потоки добавленной стоимости АПК Аршалынского района",
-        font_size=12,
-        height=400
+@st.cache_data
+def load_budget_data():
+    return pd.DataFrame({
+        'Категория': ['Налоговые поступления', 'Трансферты', 'Неналоговые доходы', 'Прочие'],
+        'Сумма': [1850, 1680, 520, 200]
+    })
+
+@st.cache_data
+def load_expense_data():
+    return pd.DataFrame({
+        'Категория': ['Образование', 'Здравоохранение', 'Инфраструктура', 'Соц. защита', 'АПК', 'Прочие'],
+        'Сумма': [980, 720, 650, 580, 420, 900]
+    })
+
+@st.cache_data
+def load_region_comparison():
+    return pd.DataFrame({
+        'Область': ['Акмолинская', 'Костанайская', 'СКО', 'Павлодарская', 'Карагандинская'],
+        'Урожай_план': [4500, 5200, 3800, 2100, 1800],
+        'Урожай_факт': [4200, 5500, 3600, 2300, 1700],
+        'Локализация': [18, 22, 15, 28, 35],
+        'Субсидии': [12.5, 15.2, 9.8, 8.4, 7.1]
+    })
+
+@st.cache_data
+def load_harvest_forecast():
+    return pd.DataFrame({
+        'Культура': ['Пшеница', 'Ячмень', 'Масличные', 'Кукуруза'],
+        'Прогноз': [22.5, 3.2, 1.8, 0.8],
+        'Факт_2025': [18.5, 2.8, 1.5, 0.7],
+        'Рост': [21.6, 14.3, 20.0, 14.3]
+    })
+
+# ============== СТРАНИЦЫ ==============
+
+def page_home():
+    render_page_header(
+        "Единая платформа Smart Governance",
+        "Консолидация данных | Анализ | Прогноз | Решение"
     )
-    return fig
-
-def create_localization_gauge(current_value, target_value, title):
-    """Индикатор-спидометр для коэффициента локализации"""
-    fig = go.Figure(go.Indicator(
-        mode="gauge+number+delta",
-        value=current_value,
-        delta={'reference': target_value, 'relative': True},
-        title={'text': title, 'font': {'size': 16}},
-        gauge={
-            'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "darkblue"},
-            'bar': {'color': "#2E86AB"},
-            'bgcolor': "white",
-            'borderwidth': 2,
-            'bordercolor': "gray",
-            'steps': [
-                {'range': [0, 30], 'color': '#ffcdd2'},
-                {'range': [30, 50], 'color': '#fff9c4'},
-                {'range': [50, 100], 'color': '#c8e6c9'}
-            ],
-            'threshold': {
-                'line': {'color': "red", 'width': 4},
-                'thickness': 0.75,
-                'value': target_value
-            }
-        }
-    ))
-    fig.update_layout(height=250, margin=dict(l=20, r=20, t=50, b=20))
-    return fig
-
-def create_subsidy_analysis(subsidies_df):
-    """Анализ субсидий"""
-    fig = make_subplots(rows=1, cols=2, 
-                        subplot_titles=('По типу получателя', 'По программе'),
-                        specs=[[{'type': 'pie'}, {'type': 'pie'}]])
-    
-    # По типу
-    by_type = subsidies_df.groupby('Тип')['Сумма_тг'].sum().reset_index()
-    fig.add_trace(go.Pie(labels=by_type['Тип'], values=by_type['Сумма_тг'], 
-                         name="По типу", hole=0.4), row=1, col=1)
-    
-    # По программе
-    by_program = subsidies_df.groupby('Программа')['Сумма_тг'].sum().reset_index()
-    fig.add_trace(go.Pie(labels=by_program['Программа'], values=by_program['Сумма_тг'],
-                         name="По программе", hole=0.4), row=1, col=2)
-    
-    fig.update_layout(height=350, showlegend=True)
-    return fig
-
-# ==================== СТРАНИЦЫ ====================
-
-def page_overview():
-    """Главная страница - обзор"""
-    st.markdown('<p class="main-header">🌾 Аршалынский район</p>', unsafe_allow_html=True)
-    st.markdown('<p class="sub-header">Локализация добавленной стоимости: Smart Governance и территориальный эффект</p>', unsafe_allow_html=True)
-    
-    profile = load_district_profile()
     
     # Ключевые метрики
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.metric("🏘️ Население", f"{profile['population']:,} чел", "↑ 0.3%")
+        render_metric("Прогноз урожая 2026", "28 млн т", "+22% к среднему", "positive", highlight=True)
     with col2:
-        st.metric("🚗 До Астаны", f"{profile['distance_to_astana']} км", "Ключевое преимущество")
+        render_metric("Локализация АПК", "18%", "Цель: 50%", "negative")
     with col3:
-        st.metric("🌱 Пашня", f"{profile['arable_land_ha']:,} га", "238.5 тыс. га")
+        render_metric("Субсидии выплачено", "285 млрд", "+12% к плану", "positive")
     with col4:
-        st.metric("🏭 Предприятия", f"{profile['industrial_enterprises']}", "АПК + промышленность")
+        render_metric("Активных СХТП", "142 500", "+8.5% г/г", "positive")
     
-    st.divider()
+    st.markdown("<br>", unsafe_allow_html=True)
     
-    # Два столбца: карта + ключевая проблема
-    col1, col2 = st.columns([1, 1])
-    
-    with col1:
-        st.subheader("📍 Географическое положение")
-        st.info("""
-        **Стратегическое преимущество**: 71 км до столицы
-        
-        Район находится в уникальной позиции для:
-        - Прямых поставок в Астану
-        - Коротких цепочек поставок
-        - Пригородного агробизнеса
-        - Агротуризма выходного дня
-        """)
-        
-        # Показываем структуру земель
-        land_data = pd.DataFrame({
-            'Тип': ['Пашня', 'Пастбища', 'Прочие с/х угодья'],
-            'Площадь': [238500, 275300, 5600]
-        })
-        fig_land = px.pie(land_data, values='Площадь', names='Тип', 
-                         title='Структура сельхозугодий',
-                         color_discrete_sequence=['#2E86AB', '#28A745', '#FFC107'])
-        fig_land.update_layout(height=300)
-        st.plotly_chart(fig_land, use_container_width=True)
-    
-    with col2:
-        st.subheader("⚠️ Ключевая проблема")
-        st.markdown("""
-        <div class="warning-box">
-        <h4>Утечка добавленной стоимости</h4>
-        <p>Аршалынский район производит значительный объём агропродукции, но большая часть 
-        добавленной стоимости создаётся за пределами района:</p>
-        <ul>
-        <li>🌾 <b>~85% зерна</b> вывозится без переработки *</li>
-        <li>🥩 <b>~80% мяса</b> перерабатывается в Астане/области *</li>
-        <li>🥛 <b>~95% молока</b> уходит на переработку за пределы района *</li>
-        <li>💰 Фермер получает <b>~15-25%</b> от конечной цены *</li>
-        </ul>
-        <div class="estimate-note">
-        * <b>Оценочные данные</b> — требуют верификации через опрос СХТП района. 
-        Методика расчёта: (Объём производства - Объём местной переработки) / Объём производства × 100%
-        </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Визуализация проблемы
-        problem_data = pd.DataFrame({
-            'Показатель': ['Доля фермера', 'Местная переработка', 'Цифровизация', 'Кооперация'],
-            'Текущее': [18, 15, 12, 20],
-            'Целевое': [35, 50, 60, 50]
-        })
-        
-        fig_gap = go.Figure()
-        fig_gap.add_trace(go.Bar(name='Текущее %', x=problem_data['Показатель'], 
-                                  y=problem_data['Текущее'], marker_color='#DC3545'))
-        fig_gap.add_trace(go.Bar(name='Целевое %', x=problem_data['Показатель'], 
-                                  y=problem_data['Целевое'], marker_color='#28A745'))
-        fig_gap.update_layout(barmode='group', height=300, title='Gap-анализ локализации')
-        st.plotly_chart(fig_gap, use_container_width=True)
-
-def page_value_chain():
-    """Страница анализа цепочек создания стоимости"""
-    st.header("🔗 Цепочки создания стоимости")
-    
-    # Предупреждение об источнике данных
-    st.warning("""
-    ⚠️ **Данные на этой странице — экспертные ОЦЕНКИ**, не из официальных источников.
-    
-    Для получения реальных данных рекомендуется:
-    - Провести опрос СХТП района о направлениях сбыта продукции
-    - Запросить данные у перерабатывающих предприятий
-    - Использовать статистику вывоза из района (акимат, таможня)
-    """)
-    
-    flows = load_value_chain_flows()
-    
-    # Санки диаграмма
-    st.plotly_chart(create_sankey_diagram(flows), use_container_width=True)
-    
-    st.divider()
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("📊 Анализ по продуктам")
-        
-        # Расчёт коэффициента локализации
-        flows['К_локализации'] = flows['Местная_переработка_%'] + (flows['Вывоз_в_Астану_%'] * 0.3)
-        flows['Потеря_стоимости_%'] = ((flows['Цена_конечная_тг'] - flows['Цена_производителя_тг']) / 
-                                        flows['Цена_конечная_тг'] * 100 * (1 - flows['Местная_переработка_%']/100))
-        
-        fig = px.bar(flows, x='Продукция', y=['Местная_переработка_%', 'Вывоз_в_Астану_%', 'Вывоз_другие_%'],
-                     title='Распределение продукции по направлениям (%)',
-                     barmode='stack',
-                     color_discrete_sequence=['#28A745', '#FFC107', '#DC3545'])
-        fig.update_layout(height=350)
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        st.subheader("💰 Потеря добавленной стоимости")
-        
-        fig2 = px.bar(flows, x='Продукция', y='Потеря_стоимости_%',
-                      title='Доля стоимости, уходящая из района (%)',
-                      color='Потеря_стоимости_%',
-                      color_continuous_scale=['#28A745', '#FFC107', '#DC3545'])
-        fig2.update_layout(height=350)
-        st.plotly_chart(fig2, use_container_width=True)
-    
-    # Детальная таблица
-    st.subheader("📋 Детальные данные")
-    display_df = flows.copy()
-    display_df['Цена_производителя'] = display_df['Цена_производителя_тг'].apply(lambda x: f"{x:,.0f} ₸")
-    display_df['Цена_конечная'] = display_df['Цена_конечная_тг'].apply(lambda x: f"{x:,.0f} ₸")
-    display_df['Маржа_посредников'] = ((flows['Цена_конечная_тг'] - flows['Цена_производителя_тг']) / 
-                                        flows['Цена_производителя_тг'] * 100).apply(lambda x: f"{x:.0f}%")
-    
-    st.dataframe(display_df[['Продукция', 'Производство_т', 'Цена_производителя', 
-                             'Цена_конечная', 'Маржа_посредников', 'Местная_переработка_%']], 
-                 use_container_width=True)
-
-def page_subsidies():
-    """Страница анализа субсидий"""
-    st.header("💵 Анализ государственных субсидий")
-    
-    st.success("✅ **Данные из файла**: Аршалынскии__2025_.xlsx")
-    
-    subsidies = load_subsidies_data()
-    
-    # Реальные ключевые метрики из файла
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Общий объём субсидий 2025", "459.7 млн ₸")
-    with col2:
-        st.metric("Количество получателей", "33")
-    with col3:
-        st.metric("Крупнейший получатель", "АГРО ПРЕСТИЖ М")
-    
-    st.divider()
-    
-    # Визуализация
-    st.plotly_chart(create_subsidy_analysis(subsidies), use_container_width=True)
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("🏆 Топ-10 получателей")
-        top10 = subsidies.nlargest(10, 'Сумма_тг')
-        fig = px.bar(top10, x='Сумма_тг', y='Получатель', orientation='h',
-                     color='Программа',
-                     title='Крупнейшие получатели субсидий')
-        fig.update_layout(height=400, yaxis={'categoryorder':'total ascending'})
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        st.subheader("🎯 Эффективность субсидирования")
-        st.markdown("""
-        <div class="insight-box">
-        <h4>Выводы для Smart Governance:</h4>
-        <ol>
-        <li><b>Концентрация:</b> 70% субсидий получают крупные ТОО</li>
-        <li><b>Программы:</b> Инвестиционные субсидии преобладают</li>
-        <li><b>Gap:</b> Мало субсидий на переработку и кооперацию</li>
-        </ol>
-        <h4>Рекомендации:</h4>
-        <ul>
-        <li>Условие локальной переработки для субсидий</li>
-        <li>Бонусы за участие в кооперативах</li>
-        <li>Data-driven мониторинг эффективности</li>
-        </ul>
-        </div>
-        """, unsafe_allow_html=True)
-
-def page_crops():
-    """Страница анализа посевов"""
-    st.header("🌾 Посевные площади и культуры")
-    
-    st.success("✅ **Данные из файла**: ПОСЕВ_АРШАЛЫ_факт_2025.xlsx (лист '20 июня 2025 (итог)')")
-    
-    crops = load_crops_data()
-    
-    # Реальные общие метрики из файла
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("План зерновых", "173 346 га")
-    with col2:
-        st.metric("Факт посева", "191 868 га", "+10.7%")
-    with col3:
-        st.metric("Пшеница (факт)", "163 031 га", "85% от всех")
-    with col4:
-        st.metric("Хозяйств (ТОО+КХ)", "50+", "из них крупных ~15")
-    
-    st.divider()
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("📊 Структура посевов (факт 2025)")
-        
-        # Реальные суммы по культурам из файла
-        culture_sums = {
-            'Пшеница': 163031,
-            'Ячмень': 21113,
-            'Масличные': 18662,
-            'Кормовые': 11795,
-            'Горох': 1309,
-            'Овёс': 1029
-        }
-        
-        fig = px.pie(values=list(culture_sums.values()), 
-                     names=list(culture_sums.keys()),
-                     title='Структура посевных площадей (га)',
-                     color_discrete_sequence=px.colors.qualitative.Set2)
-        fig.update_layout(height=350)
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        st.subheader("🏢 Топ хозяйств по площади (факт)")
-        
-        # Убираем итоговую строку КХ для графика
-        crops_for_chart = crops[crops['Хозяйство'] != 'КХ (всего)'].copy()
-        fig2 = px.bar(crops_for_chart.nlargest(10, 'Факт_га'), 
-                      x='Факт_га', y='Хозяйство', orientation='h',
-                      title='Крупнейшие землепользователи',
-                      color='Выполнение_%',
-                      color_continuous_scale='RdYlGn',
-                      range_color=[50, 150])
-        fig2.update_layout(height=350, yaxis={'categoryorder':'total ascending'})
-        st.plotly_chart(fig2, use_container_width=True)
-    
-    # Детальная таблица с возможностью добавленной стоимости
-    st.subheader("💡 Потенциал локализации по культурам")
-    
-    potential = pd.DataFrame({
-        'Культура': ['Пшеница', 'Ячмень', 'Масличные', 'Кормовые', 'Горох'],
-        'Площадь_га': [163031, 21113, 18662, 11795, 1309],
-        'Текущая_переработка_%': ['~15% *', '~10% *', '~5% *', '~60% *', '~0% *'],
-        'Потенциал_переработки': ['Мука, макароны, хлеб', 'Крупа, солод, корма', 
-                                   'Масло, жмых', 'Комбикорма', 'Консервация, заморозка'],
-        'Инвестиции_нужны_млн': [500, 200, 300, 50, 150],
-        'Доп_рабочие_места': [50, 20, 30, 10, 15]
-    })
-    
-    st.dataframe(potential, use_container_width=True)
-    st.caption("* Оценочные данные — требуют верификации через опрос перерабатывающих предприятий")
-
-def page_smart_governance():
-    """Страница Smart Governance"""
-    st.header("🖥️ Smart Governance для локализации")
-    
-    # Индикаторы
-    st.subheader("📈 Текущие индикаторы локализации")
+    # Описание модулей
+    render_section_title("Модули платформы")
     
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.plotly_chart(create_localization_gauge(18, 35, "Доля фермера в цене (%)"), 
-                       use_container_width=True)
+        st.markdown(f"""
+        <div class="card" style="border-top: 3px solid {COLORS['success']};">
+            <div class="card-title">Модуль Производители</div>
+            <div class="card-subtitle">Сельхозтоваропроизводители</div>
+            <ul style="color:{COLORS['text_secondary']};font-size:0.85rem;padding-left:1.2rem;margin-top:1rem;">
+                <li>Каталог мер господдержки</li>
+                <li>Карта производителей сырья</li>
+                <li>Рыночная аналитика</li>
+                <li>Маркетплейс прямых продаж</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+    
     with col2:
-        st.plotly_chart(create_localization_gauge(15, 50, "Местная переработка (%)"), 
-                       use_container_width=True)
+        st.markdown(f"""
+        <div class="card" style="border-top: 3px solid {COLORS['medium']};">
+            <div class="card-title">Модуль Акимат</div>
+            <div class="card-subtitle">Местные исполнительные органы</div>
+            <ul style="color:{COLORS['text_secondary']};font-size:0.85rem;padding-left:1.2rem;margin-top:1rem;">
+                <li>Сводный дашборд района</li>
+                <li>Социальные показатели</li>
+                <li>Бюджет и инвестиции</li>
+                <li>ИИ-прогнозы развития</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+    
     with col3:
-        st.plotly_chart(create_localization_gauge(12, 60, "Цифровизация АПК (%)"), 
-                       use_container_width=True)
+        st.markdown(f"""
+        <div class="card" style="border-top: 3px solid {COLORS['dark']};">
+            <div class="card-title">Модуль Госорганы</div>
+            <div class="card-subtitle">Министерства и ведомства</div>
+            <ul style="color:{COLORS['text_secondary']};font-size:0.85rem;padding-left:1.2rem;margin-top:1rem;">
+                <li>Космомониторинг и прогнозы</li>
+                <li>Синхронизация задач</li>
+                <li>Региональный анализ</li>
+                <li>KPI и исполнение</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
     
-    st.divider()
+    st.markdown("<br>", unsafe_allow_html=True)
     
-    # Компоненты Smart Governance
-    st.subheader("🔧 Компоненты Smart Governance системы")
+    render_alert("info", "Принцип синхронного управления",
+                "Прогноз урожая → Все министерства получают задачи одновременно → Скоординированное исполнение за дни вместо месяцев")
     
-    col1, col2 = st.columns(2)
+    # График локализации
+    render_section_title("Динамика локализации добавленной стоимости")
     
-    with col1:
-        st.markdown("""
-        ### 📊 1. Платформа данных
-        
-        **Текущее состояние:** Фрагментированные данные в Excel
-        
-        **Целевое состояние:**
-        - 🗺️ Геоинформационная система угодий
-        - 📡 IoT-мониторинг посевов (спутники + датчики)
-        - 💹 Рыночные цены в реальном времени
-        - 📋 Единый реестр СХТП с аналитикой
-        
-        **Эффект для локализации:**
-        - Прозрачность цепочек стоимости
-        - Выявление "узких мест" 
-        - Обоснование инвестиций в переработку
-        """)
-        
-        st.markdown("""
-        ### 🤝 2. Платформа кооперации
-        
-        **Текущее состояние:** Слабая горизонтальная интеграция
-        
-        **Целевое состояние:**
-        - 🏪 Цифровой кооператив "Аршалы-Агро"
-        - 📦 Совместная логистика до Астаны
-        - 🏭 Коллективные инвестиции в переработку
-        - 📊 Прозрачный учёт и распределение прибыли
-        
-        **Эффект для локализации:**
-        - Масштаб для переработки
-        - Переговорная сила с закупщиками
-        - Общие бренды
-        """)
+    data = load_localization_data()
+    fig = go.Figure()
     
-    with col2:
-        st.markdown("""
-        ### 🎯 3. Data-driven субсидирование
-        
-        **Текущее состояние:** Субсидии без условий локализации
-        
-        **Целевое состояние:**
-        - 📍 Привязка к местной переработке
-        - 📈 KPI эффективности в реальном времени
-        - 🔄 Адаптивное распределение по результатам
-        - 🤖 ИИ-рекомендации по оптимизации
-        
-        **Эффект для локализации:**
-        - Стимул к переработке на месте
-        - Измеримый территориальный эффект
-        """)
-        
-        st.markdown("""
-        ### 🛒 4. Платформа "Аршалы → Астана"
-        
-        **Текущее состояние:** Посредники забирают маржу
-        
-        **Целевое состояние:**
-        - 🚚 B2B: прямые поставки в HoReCa Астаны
-        - 🛍️ B2C: "Фермерский рынок Аршалы" онлайн
-        - 📱 Приложение с прослеживаемостью
-        - 🚜 Оптимизированная логистика (71 км!)
-        
-        **Эффект для локализации:**
-        - +15-20% к цене фермера
-        - Короткие цепочки
-        - Бренд территории
-        """)
+    fig.add_trace(go.Scatter(
+        x=data['Год'], y=data['Цель'],
+        mode='lines', name='Цель',
+        line=dict(color=COLORS['warning'], width=2, dash='dash'),
+    ))
     
-    st.divider()
+    fig.add_trace(go.Scatter(
+        x=data['Год'], y=data['Факт'],
+        mode='lines+markers', name='Факт/Прогноз',
+        line=dict(color=COLORS['medium'], width=3),
+        marker=dict(size=8),
+        fill='tozeroy',
+        fillcolor='rgba(136, 189, 242, 0.2)'
+    ))
     
-    # Дорожная карта
-    st.subheader("🗺️ Дорожная карта внедрения")
-    
-    roadmap = pd.DataFrame({
-        'Этап': ['Пилот', 'Масштабирование', 'Зрелость'],
-        'Срок': ['2026', '2027-2028', '2029-2030'],
-        'Фокус': ['Платформа данных + 1 кооператив', 
-                  'Все СХТП + переработка', 
-                  'Полная экосистема Smart Governance'],
-        'Инвестиции_млн_тг': [50, 300, 500],
-        'Ожидаемый_К_локализации_%': [25, 40, 55]
-    })
-    
-    fig = px.timeline(
-        pd.DataFrame({
-            'Этап': ['Пилот', 'Масштабирование', 'Зрелость'],
-            'Начало': ['2026-01-01', '2027-01-01', '2029-01-01'],
-            'Конец': ['2026-12-31', '2028-12-31', '2030-12-31'],
-            'К_локализации': [25, 40, 55]
-        }),
-        x_start='Начало', x_end='Конец', y='Этап',
-        color='К_локализации',
-        title='Дорожная карта: рост коэффициента локализации'
+    fig.update_layout(
+        height=320,
+        margin=dict(l=20, r=20, t=20, b=20),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5,
+                   font=dict(color=COLORS['dark'], size=12)),
+        yaxis=dict(gridcolor='rgba(106, 137, 167, 0.2)', range=[0, 60],
+                  tickfont=dict(color=COLORS['muted']), title='%'),
+        xaxis=dict(gridcolor='rgba(106, 137, 167, 0.2)',
+                  tickfont=dict(color=COLORS['muted']))
     )
-    fig.update_layout(height=250)
+    
     st.plotly_chart(fig, use_container_width=True)
     
-    st.dataframe(roadmap, use_container_width=True)
+    render_footer()
 
-def page_recommendations():
-    """Страница рекомендаций"""
-    st.header("📝 Рекомендации для Сената")
+def page_schtp():
+    render_page_header(
+        "Модуль Производители",
+        "КХ «Арай» | Аршалынский район | БИН: 123456789012"
+    )
     
-    tab1, tab2, tab3 = st.tabs(["🏛️ Для Сената/МСХ", "🏢 Для Акимата", "🌾 Для фермеров"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "Дашборд", "Господдержка", "Карта сырья", "Рынок", "Маркетплейс"
+    ])
     
+    # ===== TAB 1: ДАШБОРД =====
     with tab1:
-        st.markdown("""
-        ## Рекомендации для Сената Парламента РК и МСХ
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            render_metric("Урожай 2025", "5 200 т", "+12%", "positive")
+        with col2:
+            render_metric("Выручка", "485 млн", "+18%", "positive")
+        with col3:
+            render_metric("Средняя цена", "93 200 ₸/т", "+3 500", "positive")
+        with col4:
+            render_metric("Субсидии", "41.7 млн", "Получено", "neutral")
         
-        ### 1. Нормативное регулирование
+        st.markdown("<br>", unsafe_allow_html=True)
         
-        | Мера | Описание | Ожидаемый эффект |
-        |------|----------|------------------|
-        | **Условные субсидии** | Привязка части субсидий к условию местной переработки (≥30%) | +15% локализации |
-        | **Стандарт данных АПК** | Обязательный цифровой учёт для получателей господдержки | Прозрачность цепочек |
-        | **Кооперативные льготы** | Налоговые преференции для агрокооперативов | Рост кооперации на 50% |
+        col1, col2 = st.columns([2, 1])
         
-        ### 2. Инвестиционная политика
+        with col1:
+            render_section_title("Динамика цен")
+            
+            price_data = load_price_data()
+            fig = go.Figure()
+            
+            fig.add_trace(go.Scatter(
+                x=price_data['Дата'], y=price_data['Астана'],
+                mode='lines', name='Астана',
+                line=dict(color=COLORS['muted'], width=2)
+            ))
+            fig.add_trace(go.Scatter(
+                x=price_data['Дата'], y=price_data['Экспорт'],
+                mode='lines', name='Экспорт',
+                line=dict(color=COLORS['medium'], width=2)
+            ))
+            
+            fig.update_layout(
+                height=280,
+                margin=dict(l=20, r=20, t=10, b=20),
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                legend=dict(orientation="h", yanchor="bottom", y=1.02,
+                           font=dict(color=COLORS['dark'], size=11)),
+                yaxis=dict(gridcolor='rgba(106, 137, 167, 0.2)',
+                          tickfont=dict(color=COLORS['muted'], size=10),
+                          title='₸/тонна'),
+                xaxis=dict(gridcolor='rgba(106, 137, 167, 0.2)',
+                          tickfont=dict(color=COLORS['muted'], size=10))
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
         
-        - 🏭 **Программа "Переработка на месте"**: Субсидирование до 50% стоимости перерабатывающего оборудования для пригородных районов
-        - 🌐 **Цифровая инфраструктура**: Обеспечение 100% покрытия сельских территорий широкополосным интернетом
-        - 📊 **Пилотный проект Smart Governance**: Аршалынский район как модельная территория
-        
-        ### 3. Институциональные изменения
-        
-        - Создание **Агентства данных АПК** при МСХ
-        - Включение **индикаторов локализации** в систему оценки акимов
-        - Разработка **методики расчёта территориального эффекта** субсидий
-        """)
+        with col2:
+            render_ai_box(
+                "Оптимальное время продажи",
+                "Рекомендуем реализовать <b>60% урожая</b> в период <b>15-25 марта</b>. "
+                "Ожидаемый рост цен: +5-7%. Забронируйте вагоны заранее."
+            )
+            
+            render_section_title("Активные заказы")
+            render_order_card("Ресторан «Алтын Орда»", "Пшеница 3 кл.", "50 т", "96 000 ₸/т", "Новый")
     
+    # ===== TAB 2: ГОСПОДДЕРЖКА =====
     with tab2:
-        st.markdown("""
-        ## Рекомендации для Акимата Аршалынского района
+        render_section_title("Доступные меры государственной поддержки")
         
-        ### Краткосрочные (2026)
+        col1, col2 = st.columns([2, 1])
         
-        1. **Создание цифрового реестра СХТП**
-           - Интеграция данных из всех источников
-           - Геопривязка земельных участков
-           - Открытый дашборд для мониторинга
+        with col1:
+            subsidies = [
+                {"name": "Инвестиционные субсидии", "amount": "до 50 млн ₸", "deadline": "15.03.2026", "status": "Открыт", "local": False},
+                {"name": "Субсидии на семена", "amount": "до 5 млн ₸", "deadline": "01.04.2026", "status": "Открыт", "local": False},
+                {"name": "Субсидии на удобрения", "amount": "до 8 млн ₸", "deadline": "01.04.2026", "status": "Открыт", "local": False},
+                {"name": "Субсидии на переработку", "amount": "до 80 млн ₸", "deadline": "01.06.2026", "status": "Открыт", "local": True},
+                {"name": "Субсидии на технику", "amount": "до 25 млн ₸", "deadline": "30.06.2026", "status": "Открыт", "local": True},
+                {"name": "Льготное кредитование", "amount": "до 500 млн ₸", "deadline": "Постоянно", "status": "Открыт", "local": False},
+                {"name": "Страхование посевов", "amount": "50% премии", "deadline": "15.05.2026", "status": "Открыт", "local": False},
+                {"name": "Экспортная поддержка", "amount": "до 15 млн ₸", "deadline": "Постоянно", "status": "Открыт", "local": False},
+            ]
+            
+            for sub in subsidies:
+                render_subsidy_card(sub["name"], sub["amount"], sub["deadline"], sub["status"], sub["local"])
         
-        2. **Запуск пилотного кооператива "Аршалы-Агро"**
-           - Объединение 10-15 хозяйств
-           - Совместная логистика в Астану
-           - Цифровой учёт и прозрачное распределение
-        
-        3. **Маркетинговая платформа "Продукты Аршалы"**
-           - Бренд местной продукции
-           - Договоры с HoReCa Астаны
-           - Присутствие на маркетплейсах
-        
-        ### Среднесрочные (2027-2028)
-        
-        1. **Инвестиции в переработку**
-           - Модернизация мельниц (загрузка с 40% до 80%)
-           - Мини-цех молокопереработки
-           - Убойный цех с холодильником
-        
-        2. **Smart Village пилот**
-           - IoT-мониторинг в 5 хозяйствах
-           - Агрометеостанции
-           - Прогнозная аналитика урожайности
-        """)
+        with col2:
+            render_ai_box(
+                "Персональная рекомендация",
+                "На основе вашего профиля (зерновые, 5 200 т, Аршалынский район) рекомендуем подать на "
+                "<b>«Субсидии на семена»</b> — потенциальная выгода до 5 млн ₸. Срок подачи: до 01.04.2026."
+            )
+            
+            render_alert("info", "Условия локализации",
+                        "Субсидии с пометкой «Переработка» требуют обязательной переработки продукции на территории Казахстана.")
     
+    # ===== TAB 3: КАРТА СЫРЬЯ =====
     with tab3:
-        st.markdown("""
-        ## Практические шаги для фермеров
+        render_section_title("Производители сырья в регионе")
         
-        ### Немедленные действия
+        col1, col2 = st.columns([2, 1])
         
-        ✅ **Цифровой учёт**: Перейти с бумаги на электронный учёт (даже Excel — это начало)
+        with col1:
+            producers = [
+                {"name": "КХ «Зерно Астаны»", "product": "Пшеница 3 кл.", "volume": "8 500 т", "rating": "4.8", "contact": "+7 701 123 4567"},
+                {"name": "ТОО «Агро-Акмола»", "product": "Пшеница, Ячмень", "volume": "12 000 т", "rating": "4.6", "contact": "+7 702 234 5678"},
+                {"name": "КХ «Нива»", "product": "Масличные", "volume": "3 200 т", "rating": "4.9", "contact": "+7 705 345 6789"},
+                {"name": "ТОО «Степь»", "product": "Пшеница 4 кл.", "volume": "6 800 т", "rating": "4.5", "contact": "+7 707 456 7890"},
+                {"name": "КХ «Береке»", "product": "Ячмень", "volume": "4 100 т", "rating": "4.7", "contact": "+7 700 567 8901"},
+            ]
+            
+            for prod in producers:
+                render_producer_card(prod["name"], prod["product"], prod["volume"], prod["rating"], prod["contact"])
         
-        ✅ **Кооперация**: Объединиться с соседями для совместных закупок и продаж
+        with col2:
+            render_ai_box(
+                "Поиск сырья",
+                "Для вашего перерабатывающего предприятия найдено <b>5 поставщиков</b> в радиусе 100 км. "
+                "Общий доступный объём: <b>34 600 тонн</b>."
+            )
+            
+            # Мини-карта (заглушка)
+            st.markdown(f"""
+            <div class="card" style="text-align:center;padding:2rem;">
+                <div style="color:{COLORS['muted']};font-size:0.9rem;">Интерактивная карта</div>
+                <div style="color:{COLORS['dark']};font-size:1.1rem;font-weight:600;margin-top:0.5rem;">Аршалынский район</div>
+                <div style="color:{COLORS['muted']};font-size:0.85rem;margin-top:0.25rem;">5 производителей | 34 600 т</div>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    # ===== TAB 4: РЫНОК =====
+    with tab4:
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            render_metric("Пшеница (Астана)", "95 800 ₸", "+2.1%", "positive")
+        with col2:
+            render_metric("Пшеница (Экспорт)", "102 500 ₸", "+1.8%", "positive")
+        with col3:
+            render_metric("Ячмень", "72 400 ₸", "+0.9%", "positive")
+        with col4:
+            render_metric("Масличные", "185 000 ₸", "-0.5%", "negative")
         
-        ✅ **Прямые каналы**: Найти 2-3 прямых покупателя в Астане (рестораны, магазины)
+        st.markdown("<br>", unsafe_allow_html=True)
         
-        ✅ **Качество и прослеживаемость**: Фиксировать происхождение продукции
+        render_section_title("Динамика цен за 40 дней")
         
-        ### Что это даёт?
+        price_data = load_price_data()
+        fig = go.Figure()
         
-        | Действие | Эффект для фермера |
-        |----------|-------------------|
-        | Прямые продажи в Астану | +15-25% к цене |
-        | Участие в кооперативе | -20% затраты на логистику |
-        | Цифровой учёт | Доступ к кредитам и субсидиям |
-        | Местная переработка | +30-50% к стоимости продукции |
+        fig.add_trace(go.Scatter(
+            x=price_data['Дата'], y=price_data['Астана'],
+            mode='lines', name='Пшеница (Астана)',
+            line=dict(color=COLORS['dark'], width=2)
+        ))
+        fig.add_trace(go.Scatter(
+            x=price_data['Дата'], y=price_data['Экспорт'],
+            mode='lines', name='Пшеница (Экспорт)',
+            line=dict(color=COLORS['medium'], width=2)
+        ))
+        fig.add_trace(go.Scatter(
+            x=price_data['Дата'], y=price_data['Ячмень'],
+            mode='lines', name='Ячмень',
+            line=dict(color=COLORS['muted'], width=2)
+        ))
         
-        ### Контакты для поддержки
+        fig.update_layout(
+            height=350,
+            margin=dict(l=20, r=20, t=20, b=20),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            legend=dict(orientation="h", yanchor="bottom", y=1.02,
+                       font=dict(color=COLORS['dark'], size=11)),
+            yaxis=dict(gridcolor='rgba(106, 137, 167, 0.2)',
+                      tickfont=dict(color=COLORS['muted']), title='₸/тонна'),
+            xaxis=dict(gridcolor='rgba(106, 137, 167, 0.2)',
+                      tickfont=dict(color=COLORS['muted']))
+        )
         
-        - 📞 Акимат района: (отдел с/х)
-        - 🌐 Портал субсидий: qoldau.kz
-        - 🤝 Палата предпринимателей: Атамекен
-        """)
+        st.plotly_chart(fig, use_container_width=True)
+        
+        render_ai_box(
+            "Рыночный прогноз",
+            "Ожидается рост цен на пшеницу на <b>5-7%</b> в марте-апреле в связи с сезонным спросом. "
+            "Рекомендуем зафиксировать контракты на экспорт до конца февраля."
+        )
+    
+    # ===== TAB 5: МАРКЕТПЛЕЙС =====
+    with tab5:
+        render_alert("success", "Преимущество прямых продаж",
+                    "Средняя цена на маркетплейсе на 15-20% выше, чем у перекупщиков. Вы экономите на посредниках.")
+        
+        render_section_title("Актуальные заказы")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            orders = [
+                {"buyer": "Ресторан «Алтын Орда»", "product": "Пшеница 3 кл.", "volume": "50 т", "price": "96 000 ₸/т", "status": "Новый"},
+                {"buyer": "Сеть «Магнум»", "product": "Мука в/с", "volume": "20 т", "price": "185 000 ₸/т", "status": "Активный"},
+                {"buyer": "ТОО «Хлебозавод»", "product": "Пшеница 2 кл.", "volume": "200 т", "price": "98 000 ₸/т", "status": "Новый"},
+            ]
+            
+            for order in orders:
+                render_order_card(order["buyer"], order["product"], order["volume"], order["price"], order["status"])
+        
+        with col2:
+            orders = [
+                {"buyer": "Экспорт — Узбекистан", "product": "Пшеница 3 кл.", "volume": "2 000 т", "price": "102 000 ₸/т", "status": "Новый"},
+                {"buyer": "Экспорт — Китай", "product": "Масличные", "volume": "500 т", "price": "188 000 ₸/т", "status": "Активный"},
+                {"buyer": "ТОО «Макфа-KZ»", "product": "Пшеница твёрдая", "volume": "1 000 т", "price": "105 000 ₸/т", "status": "Новый"},
+            ]
+            
+            for order in orders:
+                render_order_card(order["buyer"], order["product"], order["volume"], order["price"], order["status"])
+    
+    render_footer()
 
-# ==================== НАВИГАЦИЯ ====================
+def page_mio():
+    render_page_header(
+        "Модуль Акимат",
+        f"Аршалынский район | Акмолинская область | {datetime.now().strftime('%d.%m.%Y')}"
+    )
+    
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "Сводка", "Сельское хозяйство", "Социальная сфера", "Бюджет", "Прогноз"
+    ])
+    
+    # ===== TAB 1: СВОДКА =====
+    with tab1:
+        col1, col2, col3, col4, col5 = st.columns(5)
+        with col1:
+            render_metric("Население", "33 363", "-0.8%", "negative")
+        with col2:
+            render_metric("Занятость", "18 106", "Безр. 4.2%", "neutral")
+        with col3:
+            render_metric("Посевы", "191 868 га", "+10.7%", "positive")
+        with col4:
+            render_metric("Бюджет", "4 250 млн", "+70 млн", "positive")
+        with col5:
+            render_metric("Локализация", "15%", "Цель: 50%", "negative")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        col1, col2 = st.columns([3, 2])
+        
+        with col1:
+            render_section_title("Индекс развития района")
+            
+            radar_data = load_radar_data()
+            fig = go.Figure()
+            
+            fig.add_trace(go.Scatterpolar(
+                r=radar_data['Целевое'].tolist() + [radar_data['Целевое'].iloc[0]],
+                theta=radar_data['Показатель'].tolist() + [radar_data['Показатель'].iloc[0]],
+                fill='toself',
+                fillcolor='rgba(196, 149, 106, 0.2)',
+                line=dict(color=COLORS['warning'], width=1, dash='dash'),
+                name='Цель'
+            ))
+            
+            fig.add_trace(go.Scatterpolar(
+                r=radar_data['Значение'].tolist() + [radar_data['Значение'].iloc[0]],
+                theta=radar_data['Показатель'].tolist() + [radar_data['Показатель'].iloc[0]],
+                fill='toself',
+                fillcolor='rgba(136, 189, 242, 0.4)',
+                line=dict(color=COLORS['medium'], width=2),
+                name='Факт'
+            ))
+            
+            fig.update_layout(
+                polar=dict(
+                    radialaxis=dict(visible=True, range=[0, 100],
+                                   gridcolor='rgba(106, 137, 167, 0.2)',
+                                   tickfont=dict(color=COLORS['muted'], size=10)),
+                    angularaxis=dict(gridcolor='rgba(106, 137, 167, 0.2)',
+                                    tickfont=dict(color=COLORS['dark'], size=11))
+                ),
+                showlegend=True,
+                legend=dict(orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5,
+                           font=dict(size=11)),
+                height=350,
+                margin=dict(l=60, r=60, t=40, b=60),
+                paper_bgcolor='rgba(0,0,0,0)',
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            render_section_title("Требуют внимания")
+            render_alert("danger", "Отток населения",
+                        "За год: -0.8% (-267 чел). Прогноз на 2026: -2.1% без принятия мер.")
+            render_alert("warning", "Низкая локализация АПК",
+                        "Только 15% продукции перерабатывается в районе. 85% добавленной стоимости уходит.")
+            render_alert("info", "Рост инвестиций",
+                        "Инвестиции: 2 850 млн (+23%). Новый проект: элеватор на 50 000 тонн.")
+    
+    # ===== TAB 2: СЕЛЬСКОЕ ХОЗЯЙСТВО =====
+    with tab2:
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            render_metric("Посевные площади", "191 868 га", "+10.7%", "positive")
+        with col2:
+            render_metric("Урожайность", "14.2 ц/га", "+8%", "positive")
+        with col3:
+            render_metric("Валовый сбор", "272 500 т", "+19%", "positive")
+        with col4:
+            render_metric("Поголовье КРС", "45 200", "+3.2%", "positive")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            render_section_title("Структура посевов")
+            
+            crop_data = pd.DataFrame({
+                'Культура': ['Пшеница', 'Ячмень', 'Масличные', 'Кормовые', 'Прочие'],
+                'Площадь': [125000, 32000, 18000, 12000, 4868]
+            })
+            
+            fig = px.pie(crop_data, values='Площадь', names='Культура',
+                        color_discrete_sequence=[COLORS['dark'], COLORS['muted'], 
+                                                 COLORS['medium'], COLORS['light'], '#9CA3AF'])
+            fig.update_layout(
+                height=280,
+                margin=dict(l=20, r=20, t=20, b=20),
+                paper_bgcolor='rgba(0,0,0,0)',
+                legend=dict(font=dict(size=11, color = COLORS['dark'])), 
+            )
+            fig.update_traces(textposition='inside', textinfo='percent+label',
+                            textfont=dict(size=11))
+            
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            render_section_title("Субсидии по категориям")
+            
+            subsidy_data = pd.DataFrame({
+                'Категория': ['ТОО', 'КХ', 'ПК', 'ИП'],
+                'Сумма': [280, 120, 40, 20]
+            })
+            
+            fig = px.bar(subsidy_data, x='Категория', y='Сумма',
+                        color_discrete_sequence=[COLORS['medium']])
+            fig.update_layout(
+                height=280,
+                margin=dict(l=20, r=20, t=20, b=20),
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                yaxis=dict(gridcolor='rgba(106, 137, 167, 0.2)',
+                          tickfont=dict(color=COLORS['muted']), 
+                          title=dict(
+                              text='млн ₸',
+                              font=dict(color=COLORS['dark']))),
+                xaxis=dict(tickfont=dict(color=COLORS['dark']),
+                           title=dict(
+                              text='Категория',
+                              font=dict(color=COLORS['dark'])))
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+    
+    # ===== TAB 3: СОЦИАЛЬНАЯ СФЕРА =====
+    with tab3:
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            render_metric("Школы", "24", "5 788 учащихся", "neutral")
+        with col2:
+            render_metric("Больницы/ФАП", "12", "28 врачей/10к", "neutral")
+        with col3:
+            render_metric("Преступность", "12.5/10к", "-8%", "positive")
+        with col4:
+            render_metric("Дороги", "342 км", "67% в норме", "neutral")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            render_section_title("Качество услуг")
+            
+            services = [
+                {"name": "Образование", "value": 72},
+                {"name": "Здравоохранение", "value": 65},
+                {"name": "Безопасность", "value": 85},
+                {"name": "Инфраструктура", "value": 67},
+                {"name": "Коммунальные услуги", "value": 58},
+            ]
+            
+            for svc in services:
+                progress_class = "success" if svc["value"] >= 75 else "warning" if svc["value"] >= 60 else "danger"
+                st.markdown(f"""
+                <div style="margin-bottom:0.75rem;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:0.25rem;">
+                        <span style="color:{COLORS['dark']};font-size:0.85rem;font-weight:500;">{svc["name"]}</span>
+                        <span style="color:{COLORS['muted']};font-size:0.85rem;">{svc["value"]}%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill {progress_class}" style="width:{svc["value"]}%;"></div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        with col2:
+            render_section_title("Миграция населения")
+            
+            migration_data = pd.DataFrame({
+                'Год': ['2021', '2022', '2023', '2024', '2025'],
+                'Прибыло': [450, 420, 380, 350, 320],
+                'Убыло': [520, 580, 620, 590, 587]
+            })
+            
+            fig = go.Figure()
+            fig.add_trace(go.Bar(x=migration_data['Год'], y=migration_data['Прибыло'],
+                                name='Прибыло', marker_color=COLORS['success']))
+            fig.add_trace(go.Bar(x=migration_data['Год'], y=migration_data['Убыло'],
+                                name='Убыло', marker_color=COLORS['danger']))
+            
+            fig.update_layout(
+                height=250,
+                barmode='group',
+                margin=dict(l=20, r=20, t=20, b=20),
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, font=dict(size=11, color = COLORS['dark'])),
+                yaxis=dict(gridcolor='rgba(106, 137, 167, 0.2)',
+                          tickfont=dict(color=COLORS['muted']), title='чел.'),
+                xaxis=dict(tickfont=dict(color=COLORS['dark']))
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+    
+    # ===== TAB 4: БЮДЖЕТ =====
+    with tab4:
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            render_metric("Доходы", "4 250 млн", "+1.7%", "positive")
+        with col2:
+            render_metric("Расходы", "4 180 млн", "+2.1%", "neutral")
+        with col3:
+            render_metric("Инвестиции", "2 850 млн", "+23%", "positive")
+        with col4:
+            render_metric("Налоги", "1 850 млн", "+5.2%", "positive")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            render_section_title("Структура доходов")
+            
+            budget_data = load_budget_data()
+            fig = px.pie(budget_data, values='Сумма', names='Категория',
+                        color_discrete_sequence=[COLORS['dark'], COLORS['muted'], 
+                                                 COLORS['medium'], COLORS['light']])
+            fig.update_layout(
+                height=280,
+                margin=dict(l=20, r=20, t=20, b=20),
+                paper_bgcolor='rgba(0,0,0,0)',
+                legend=dict(font=dict(size=11, color = COLORS['dark'])),
+            )
+            fig.update_traces(textposition='inside', textinfo='percent',
+                            textfont=dict(size=11))
+            
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            render_section_title("Структура расходов")
+            
+            expense_data = load_expense_data()
+            fig = px.pie(expense_data, values='Сумма', names='Категория',
+                        color_discrete_sequence=[COLORS['success'], COLORS['medium'], 
+                                                 COLORS['muted'], COLORS['warning'],
+                                                 COLORS['dark'], COLORS['light']])
+            fig.update_layout(
+                height=280,
+                margin=dict(l=20, r=20, t=20, b=20),
+                paper_bgcolor='rgba(0,0,0,0)',
+                legend=dict(font=dict(size=11, color = COLORS['dark'])),
+            )
+            fig.update_traces(textposition='inside', textinfo='percent',
+                            textfont=dict(size=11))
+            
+            st.plotly_chart(fig, use_container_width=True)
+    
+    # ===== TAB 5: ПРОГНОЗ =====
+    with tab5:
+        render_section_title("Сценарии развития до 2030 года")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown(f"""
+            <div class="card" style="border-top: 3px solid {COLORS['muted']};">
+                <div class="card-title">Базовый сценарий</div>
+                <div class="card-subtitle">Без дополнительных мер</div>
+                <div style="margin-top:1rem;">
+                    <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid {COLORS['light']};">
+                        <span style="color:{COLORS['text_secondary']};">Население</span>
+                        <span style="color:{COLORS['danger']};font-weight:600;">-8% (30 694)</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid {COLORS['light']};">
+                        <span style="color:{COLORS['text_secondary']};">Локализация</span>
+                        <span style="color:{COLORS['warning']};font-weight:600;">21%</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid {COLORS['light']};">
+                        <span style="color:{COLORS['text_secondary']};">Рабочие места</span>
+                        <span style="color:{COLORS['danger']};font-weight:600;">-5%</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:0.5rem 0;">
+                        <span style="color:{COLORS['text_secondary']};">Бюджет</span>
+                        <span style="color:{COLORS['muted']};font-weight:600;">+8%</span>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown(f"""
+            <div class="card" style="border-top: 3px solid {COLORS['success']};">
+                <div class="card-title">Оптимистичный сценарий</div>
+                <div class="card-subtitle">С реализацией рекомендаций</div>
+                <div style="margin-top:1rem;">
+                    <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid {COLORS['light']};">
+                        <span style="color:{COLORS['text_secondary']};">Население</span>
+                        <span style="color:{COLORS['success']};font-weight:600;">+6% (35 365)</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid {COLORS['light']};">
+                        <span style="color:{COLORS['text_secondary']};">Локализация</span>
+                        <span style="color:{COLORS['success']};font-weight:600;">55%</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid {COLORS['light']};">
+                        <span style="color:{COLORS['text_secondary']};">Рабочие места</span>
+                        <span style="color:{COLORS['success']};font-weight:600;">+180</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:0.5rem 0;">
+                        <span style="color:{COLORS['text_secondary']};">Бюджет</span>
+                        <span style="color:{COLORS['success']};font-weight:600;">+35%</span>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        render_ai_box(
+            "Рекомендации для оптимистичного сценария",
+            "1. <b>Мини-элеватор</b> (инвестиции 450 млн) → +45 рабочих мест, +120 млн налогов/год<br>"
+            "2. <b>Кооператив фермеров</b> (инвестиции 80 млн) → +20% цена для фермеров<br>"
+            "3. <b>Платформа прямых продаж</b> (инвестиции 25 млн) → +15% доход СХТП"
+        )
+    
+    render_footer()
+
+def page_gov():
+    render_page_header(
+        "Модуль Госорганы",
+        "Межведомственная координация | Синхронное управление"
+    )
+    
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "Мониторинг", "Синхронизация", "Регионы", "KPI"
+    ])
+    
+    # ===== TAB 1: МОНИТОРИНГ =====
+    with tab1:
+        render_alert("success", "Прогноз урожая 2026",
+                    "На основе NDVI-индекса и метеоданных: зерновые — 28 млн тонн (+22% к среднему). Уверенность прогноза: 87%.")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            render_metric("Пшеница", "22.5 млн т", "+21.6%", "positive", highlight=True)
+        with col2:
+            render_metric("Ячмень", "3.2 млн т", "+14.3%", "positive")
+        with col3:
+            render_metric("Масличные", "1.8 млн т", "+20.0%", "positive")
+        with col4:
+            render_metric("Кукуруза", "0.8 млн т", "+14.3%", "positive")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            render_section_title("NDVI по регионам")
+            
+            region_data = load_region_comparison()
+            
+            fig = go.Figure()
+            fig.add_trace(go.Bar(
+                x=region_data['Область'],
+                y=region_data['Урожай_план'],
+                name='План',
+                marker_color=COLORS['light']
+            ))
+            fig.add_trace(go.Bar(
+                x=region_data['Область'],
+                y=region_data['Урожай_факт'],
+                name='Прогноз',
+                marker_color=COLORS['medium']
+            ))
+            
+            fig.update_layout(
+                height=300,
+                barmode='group',
+                margin=dict(l=20, r=20, t=20, b=20),
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, font=dict(size=11)),
+                yaxis=dict(gridcolor='rgba(106, 137, 167, 0.2)',
+                          tickfont=dict(color=COLORS['muted']), title='тыс. тонн'),
+                xaxis=dict(tickfont=dict(color=COLORS['dark'], size=10))
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            render_section_title("Метеопрогноз")
+            
+            weather = [
+                {"period": "Июнь", "status": "Благоприятно", "class": "success"},
+                {"period": "Июль", "status": "Благоприятно", "class": "success"},
+                {"period": "Август", "status": "Умеренный риск", "class": "warning"},
+                {"period": "Сентябрь", "status": "Благоприятно", "class": "success"},
+            ]
+            
+            for w in weather:
+                st.markdown(f"""
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0;border-bottom:1px solid {COLORS['light']};">
+                    <span style="color:{COLORS['dark']};font-weight:500;">{w["period"]}</span>
+                    <span class="badge badge-{w["class"]}">{w["status"]}</span>
+                </div>
+                """, unsafe_allow_html=True)
+    
+    # ===== TAB 2: СИНХРОНИЗАЦИЯ =====
+    with tab2:
+        render_sync_banner("Режим синхронизации активен | Все министерства получили задачи | Срок: 15.05.2026")
+        
+        render_section_title("Задачи министерств")
+        
+        tasks = [
+            {"ministry": "МСХ РК", "task": "Расчёт лимитов закупа Продкорпорации: 3.5 млн тонн. Субсидии: +45 млрд ₸", 
+             "status": "В работе", "progress": 65, "critical": "Высокая"},
+            {"ministry": "КТЖ / Минтранс", "task": "Обеспечить 12 000 вагонов. Приоритетные направления: Достык, Хоргос, Актау", 
+             "status": "Ожидает", "progress": 30, "critical": "Критическая"},
+            {"ministry": "МИД / Минторговли", "task": "Переговоры по экспортным контрактам: Китай (+2 млн т), Узбекистан, Иран", 
+             "status": "В работе", "progress": 45, "critical": "Высокая"},
+            {"ministry": "Минфин / МНЭ", "task": "Резервирование бюджета: +85 млрд ₸. Источники: НФ, перераспределение", 
+             "status": "На согласовании", "progress": 50, "critical": "Высокая"},
+            {"ministry": "МИО (Акиматы)", "task": "Подготовка элеваторов и ХПП. Проверка весового оборудования", 
+             "status": "В работе", "progress": 40, "critical": "Высокая"},
+        ]
+        
+        col1, col2 = st.columns(2)
+        
+        for i, task in enumerate(tasks):
+            with col1 if i % 2 == 0 else col2:
+                render_task_card(task["ministry"], task["task"], task["status"], task["progress"], task["critical"])
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        render_ai_box(
+            "Межведомственная рекомендация",
+            "При текущих темпах <b>КТЖ не успеет</b> подготовить вагоны к уборочной. "
+            "Рекомендуем провести <b>экстренное совещание</b> с участием Минтранс и Минфин для ускорения финансирования."
+        )
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if st.button("Отправить напоминания", use_container_width=True):
+                st.success("Напоминания отправлены ответственным")
+        with col2:
+            if st.button("Созвать совещание", use_container_width=True):
+                st.info("Приглашения отправлены на 12.02.2026 10:00")
+        with col3:
+            if st.button("Сформировать отчёт", use_container_width=True):
+                st.success("Отчёт сформирован и направлен в АП")
+    
+    # ===== TAB 3: РЕГИОНЫ =====
+    with tab3:
+        render_section_title("Сравнительный анализ областей")
+        
+        region_data = load_region_comparison()
+        
+        # Собираем строки таблицы
+        table_rows = ""
+        for _, row in region_data.iterrows():
+            diff = row['Урожай_факт'] - row['Урожай_план']
+            diff_color = COLORS['success'] if diff >= 0 else COLORS['danger']
+            local_color = COLORS['success'] if row['Локализация'] >= 25 else COLORS['warning'] if row['Локализация'] >= 18 else COLORS['danger']
+            
+            table_rows += f"""
+                <tr>
+                    <td><strong>{row['Область']}</strong></td>
+                    <td>{row['Урожай_план']:,}</td>
+                    <td style="color:{diff_color}">{row['Урожай_факт']:,} ({'+' if diff >= 0 else ''}{diff:,})</td>
+                    <td style="color:{local_color}">{row['Локализация']}%</td>
+                    <td>{row['Субсидии']} млрд</td>
+                </tr>"""
+        
+        # Полная таблица в одной строке
+        full_table = f"""
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Область</th>
+                    <th>План (тыс. т)</th>
+                    <th>Прогноз (тыс. т)</th>
+                    <th>Локализация</th>
+                    <th>Субсидии (млрд)</th>
+                </tr>
+            </thead>
+            <tbody>{table_rows}
+            </tbody>
+        </table>
+        """
+        
+        # Один вызов st.markdown
+        st.markdown(full_table, unsafe_allow_html=True)
+
+
+
+ 
+        
+        render_section_title("Субсидии vs Локализация")
+        
+        fig = px.scatter(region_data, x='Субсидии', y='Локализация',
+                        size='Урожай_факт', color='Область',
+                        color_discrete_sequence=[COLORS['dark'], COLORS['muted'], 
+                                                 COLORS['medium'], COLORS['warning'], COLORS['success']])
+        
+        fig.update_layout(
+            height=350,
+            margin=dict(l=20, r=20, t=20, b=20),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            legend=dict(font=dict(size=11, color=COLORS['dark'])),
+            yaxis=dict(gridcolor='rgba(106, 137, 167, 0.2)',
+                      tickfont=dict(color=COLORS['muted']), title='Локализация, %', title_font=dict(color=COLORS['dark'])),
+            xaxis=dict(gridcolor='rgba(106, 137, 167, 0.2)',
+                      tickfont=dict(color=COLORS['muted']), title='Субсидии, млрд ₸', title_font=dict(color=COLORS['dark']))
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+    
+    # ===== TAB 4: KPI =====
+    with tab4:
+        render_section_title("Ключевые показатели эффективности")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        kpis = [
+            {"name": "Урожай", "value": 28, "target": 35, "unit": "млн т"},
+            {"name": "Экспорт", "value": 72, "target": 100, "unit": "%"},
+            {"name": "Локализация", "value": 18, "target": 50, "unit": "%"},
+            {"name": "Продбезопасность", "value": 85, "target": 100, "unit": "%"},
+        ]
+        
+        for i, kpi in enumerate(kpis):
+            with [col1, col2, col3, col4][i]:
+                pct = int((kpi["value"] / kpi["target"]) * 100)
+                color = COLORS['success'] if pct >= 80 else COLORS['warning'] if pct >= 60 else COLORS['danger']
+                
+                fig = go.Figure(go.Indicator(
+                    mode="gauge+number",
+                    value=kpi["value"],
+                    title={'text': kpi["name"], 'font': {'size': 14, 'color': COLORS['dark']}},
+                    number={'suffix': f' {kpi["unit"]}', 'font': {'size': 20, 'color': COLORS['dark']}},
+                    gauge={
+                        'axis': {'range': [0, kpi["target"]], 'tickfont': {'size': 10, 'color': COLORS['dark']}},
+                        'bar': {'color': color},
+                        'bgcolor': COLORS['dark'],
+                        'borderwidth': 0,
+                        'steps': [
+                            {'range': [0, kpi["target"] * 0.6], 'color': 'rgba(167, 106, 106, 0.2)'},
+                            {'range': [kpi["target"] * 0.6, kpi["target"] * 0.8], 'color': 'rgba(196, 149, 106, 0.2)'},
+                            {'range': [kpi["target"] * 0.8, kpi["target"]], 'color': 'rgba(74, 144, 121, 0.2)'},
+                        ],
+                        'threshold': {
+                            'line': {'color': COLORS['dark'], 'width': 2},
+                            'thickness': 0.75,
+                            'value': kpi["target"]
+                        }
+                    }
+                ))
+                
+                fig.update_layout(
+                    height=200,
+                    margin=dict(l=20, r=20, t=40, b=20),
+                    paper_bgcolor='rgba(0,0,0,0)',
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        render_section_title("Динамика выполнения")
+        
+        years = ['2020', '2021', '2022', '2023', '2024', '2025', '2026']
+        
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=years, y=[15, 16, 17, 18, 20, 22, 28],
+                                mode='lines+markers', name='Урожай (млн т)',
+                                line=dict(color=COLORS['dark'], width=2)))
+        fig.add_trace(go.Scatter(x=years, y=[12, 13, 14, 15, 16, 17, 18],
+                                mode='lines+markers', name='Локализация (%)',
+                                line=dict(color=COLORS['medium'], width=2)))
+        
+        fig.update_layout(
+            height=300,
+            margin=dict(l=20, r=20, t=20, b=20),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, font=dict(size=11, color = COLORS["dark"])),
+            yaxis=dict(gridcolor='rgba(106, 137, 167, 0.2)', tickfont=dict(color=COLORS['muted'])),
+            xaxis=dict(gridcolor='rgba(106, 137, 167, 0.2)', tickfont=dict(color=COLORS['dark']))
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+    
+    render_footer()
+
+# ============== SIDEBAR & NAVIGATION ==============
 
 def main():
-    st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Flag_of_Kazakhstan.svg/1200px-Flag_of_Kazakhstan.svg.png", width=100)
-    st.sidebar.title("📍 Навигация")
+    with st.sidebar:
+        st.markdown("""
+        <div class="sidebar-header">
+            <div class="sidebar-logo">🇰🇿</div>
+            <div class="sidebar-title">Единая платформа<br>Smart Governance</div>
+            <div class="sidebar-subtitle">Республика Казахстан</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        page = st.radio(
+            "Навигация",
+            ["Главная", "Производители", "Акимат", "Госорганы"],
+            label_visibility="collapsed"
+        )
+        
+        st.divider()
+        
+        st.markdown(f"""
+        <div style="padding:1rem;background:{COLORS['light']};border-radius:8px;font-size:0.8rem;">
+            <div style="color:{COLORS['dark']};font-weight:600;margin-bottom:0.5rem;">V поток «Талдау мектебі»</div>
+            <div style="color:{COLORS['muted']};">Сенат Парламента РК</div>
+            <div style="color:{COLORS['muted']};margin-top:0.5rem;">Кейс: Аршалынский район</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown(f"""
+        <div style="margin-top:1rem;padding:0.75rem;font-size:0.75rem;color:{COLORS['muted']};">
+            Обновлено: {datetime.now().strftime('%d.%m.%Y %H:%M')}
+        </div>
+        """, unsafe_allow_html=True)
     
-    pages = {
-        "🏠 Обзор": page_overview,
-        "🔗 Цепочки стоимости": page_value_chain,
-        "💵 Субсидии": page_subsidies,
-        "🌾 Посевы": page_crops,
-        "🖥️ Smart Governance": page_smart_governance,
-        "📝 Рекомендации": page_recommendations
-    }
-    
-    selection = st.sidebar.radio("Выберите раздел:", list(pages.keys()))
-    
-    # Информация о проекте
-    st.sidebar.divider()
-    st.sidebar.info("""
-    **V поток «Талдау мектебі»**
-    
-    Тема: SMART GOVERNANCE
-    
-    Направление: Агропромышленность и устойчивое сельское развитие
-    
-    Кейс: Аршалынский район
-    """)
-    
-    st.sidebar.divider()
-    st.sidebar.caption("© 2026 Школа аналитики при Сенате РК")
-    
-    # Отображение выбранной страницы
-    pages[selection]()
+    # Роутинг
+    if page == "Главная":
+        page_home()
+    elif page == "Производители":
+        page_schtp()
+    elif page == "Акимат":
+        page_mio()
+    elif page == "Госорганы":
+        page_gov()
 
 if __name__ == "__main__":
     main()
